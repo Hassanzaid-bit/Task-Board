@@ -24,6 +24,21 @@ Three components, one Docker Compose stack:
 - **Backend**: FastAPI, one process, exposing both the REST API (`/api/v1/...`) and a WebSocket endpoint (`/ws/boards/{project_id}`).
 - **DB**: PostgreSQL, plain SQL schema (SQLAlchemy Core, not the ORM's relationship-mapping layer) so the data model stays explicit and inspectable.
 
+### Data model
+
+Three tables, defined explicitly in `backend/app/schema.py`:
+
+- **users** — `id`, `email` (unique), `display_name`, `password_hash` (argon2), `created_at`.
+- **projects** — `id`, `name`, `description`, `created_by` → users (`SET NULL` on user deletion: projects outlive their creator), `created_at`.
+- **tasks** — `id`, `project_id` → projects (`CASCADE`: tasks die with their project), `title`, `description`, `status`, `assignee_id` → users (`SET NULL`: tasks outlive their assignee), `due_date`, `created_at`, `updated_at`.
+
+Decisions worth noting:
+
+- **Status is constrained at the DB level** (`CHECK status IN ('todo','in_progress','done')`), not just validated in the API — bad data can't sneak in through a future code path.
+- **`tasks.project_id` is indexed** because "fetch a board's tasks" is the hot query.
+- **Title, description, assignee, and due date are mandatory at the API layer** (a task should be actionable, owned, and scheduled). `assignee_id` stays nullable in the DB only to support `SET NULL` when a user account is deleted; the API refuses to create or edit a task into an unassigned state.
+- No ordering column: tasks sort by `created_at` within a column. Manual reordering was cut as out of scope.
+
 ## 2. The real-time decision (Section 4)
 
 **Chosen approach: WebSockets, single in-memory connection manager, keyed by board (project) ID.**
