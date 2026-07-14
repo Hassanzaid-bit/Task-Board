@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+test.db
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+dist/
+frontend/coverage/
+
+# Environment — never commit real secrets
+.env
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
