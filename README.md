@@ -74,6 +74,21 @@ The API is available at http://localhost:8000 (OpenAPI docs at `/docs`).
   a Done task).
 - Task ordering within a column is by creation time.
 
+## Notable third-party libraries (and why)
+
+- **TanStack Query** (frontend) — server-state caching and invalidation; the
+  core of the real-time refetch pattern. Full reasoning in `ARCHITECTURE.md` §3.
+- **@hello-pangea/dnd** (frontend) — board drag-and-drop; the maintained fork
+  of react-beautiful-dnd, with accessible keyboard dragging built in.
+- **argon2-cffi** (backend) — Argon2id password hashing, per the brief's
+  bcrypt/argon2 requirement.
+- **PyJWT** (backend) — JWT signing/verification; small and standard, no need
+  for a full auth framework at this scope.
+- **slowapi** (backend) — per-IP rate limiting on the auth endpoints; in-memory,
+  which is enough for a single-process deployment.
+- **SQLAlchemy Core + asyncpg** (backend) — explicit SQL without ORM
+  relationship mapping (see `ARCHITECTURE.md` §5a).
+
 ## Running without Docker
 
 Backend (needs a local PostgreSQL, or point `DATABASE_URL` elsewhere):
