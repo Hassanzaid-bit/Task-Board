@@ -4,7 +4,7 @@ import { getToken } from '../api'
 
 /**
  * Live-updates channel for one board. Messages are treated purely as
- * invalidation signals (see ARCHITECTURE.md §2): any event for this board
+ * invalidation signals (see ARCHITECTURE.md): any event for this board
  * invalidates the tasks query and TanStack Query refetches.
  * Reconnects with capped exponential backoff if the connection drops.
  */

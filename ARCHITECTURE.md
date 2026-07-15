@@ -58,15 +58,17 @@ Four real options exist for "how does a connected client find out about a change
 
 ### Scaling the real-time layer (10x / 100x)
 
-The invalidate-then-refetch client pattern and broadcast-after-commit server pattern wouldn't change as load grows — only **how a broadcast reaches every connected socket** would.
+The invalidate-then-refetch client pattern and broadcast-after-commit server pattern wouldn't change as load grows — only **how a broadcast reaches every connected socket** would. Redis/Kafka are doorbell buses between servers; they don't replace the local connection manager or change what the browser does.
 
-**Now (tens of users, one process).** After a task mutation commits, the endpoint calls `manager.broadcast()` on an in-memory dict: `{project_id: [WebSocket, …]}`. Every socket watching that board is on the same machine, so this is simple and fast. No Redis, no load balancer.
+**Now (tens of users, one process).** After a task mutation commits, the endpoint calls `manager.broadcast()` on an in-memory dict: `{project_id: [WebSocket, …]}`. Every socket watching that board lives in that one process, so a local broadcast reaches everyone. No Redis, no load balancer.
 
-**At 10x (hundreds of users, multiple workers).** I'd run more than one backend instance behind a load balancer. The problem I'd hit: User B's WebSocket might be on Server A, but the PATCH that moves a task could land on Server B — and B's in-memory socket list is empty, so nobody gets notified. My fix would be **Redis Pub/Sub**: after commit, the mutating instance publishes `{project_id, event}` to a channel; every instance subscribes and relays to its own local sockets. Any instance can handle any request. The client would still just invalidate and refetch — unchanged.
+**At 10x (hundreds of users, multiple workers).** I'd run more than one backend instance behind a load balancer. Each process has its **own** memory, so sockets don't cross machines: Alice's WebSocket might be on Server A while Bob's PATCH lands on Server B — B's local socket list has no Alice, so she never gets notified.
 
-**At 100x (thousands+).** If I needed message replay (a client offline must catch up on missed events) or wanted to separate WebSocket connection load from API traffic, I'd move to a dedicated message broker (Kafka, NATS) or a standalone realtime gateway. I wouldn't do that for this exercise's scale — only once replay, ordering guarantees, or connection volume become real constraints.
+Fix: **Redis Pub/Sub** as a shared channel between backends (like a group chat per board). Every instance **subscribes** on startup. After commit, the mutating instance **publishes** a small signal (`{type, project_id}`) to e.g. `board:7`. Redis relays that to all subscribers. Each instance then looks up **its existing** local sockets for that board and `send_json`s — it does not store the change in the connection manager; the manager is still just a phone book of live sockets. Any instance can handle any REST or WebSocket request. The client still just invalidates and refetches — unchanged.
 
-**Bottom line:** the design is correct for one process today. Redis pub/sub is the first step I'd add when running a second worker — not an architectural rewrite.
+**At 100x (thousands+).** Redis pub/sub is enough for live fan-out, but it is fire-and-forget: if nothing is listening, the shout is gone. I'd reach for a durable broker (**Kafka**, NATS) or a standalone realtime gateway when I need more than a doorbell — e.g. **message replay** (catch up on missed events without refetching everything), **ordering / no-lost-notify** under failures, **many consumers** of the same event (activity log, search index, webhooks), or splitting WebSocket connection load off the API processes. I wouldn't do that for this exercise's scale — only once those become real constraints.
+
+**Bottom line:** the design is correct for one process today. Redis pub/sub is the first step I'd add when running a second worker — not an architectural rewrite. Kafka/gateway come later, for durability and decoupling, not merely "more users."
 
 ### Trigger point
 Broadcasts fire from inside the mutating endpoint, **after the DB transaction commits successfully**. This keeps "what clients see" always consistent with "what's actually persisted."

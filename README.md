@@ -23,7 +23,7 @@ updates without a refresh.
 
 The API is available at http://localhost:8000 (OpenAPI docs at `/docs`).
 
-## What was built (mapped to the brief)
+## What was built
 
 ### Must have — all done
 
