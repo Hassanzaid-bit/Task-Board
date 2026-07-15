@@ -22,3 +22,7 @@ frontend/coverage/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local notes
+FRONTEND_GUIDE.md
+BACKEND_GUIDE.md

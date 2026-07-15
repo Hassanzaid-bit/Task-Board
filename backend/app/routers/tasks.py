@@ -12,7 +12,7 @@ from ..schema import TASK_STATUSES, projects, tasks, users
 router = APIRouter(prefix="/api/v1", tags=["tasks"])
 
 # Reused by list/create/update so every response carries the assignee's name
-# in one query — no per-task lookups (see ARCHITECTURE.md 5a on N+1s).
+# in one query — no per-task lookups.
 _task_with_assignee = (
     sa.select(tasks, users.c.display_name.label("assignee_name"))
     .select_from(tasks.outerjoin(users, tasks.c.assignee_id == users.c.id))

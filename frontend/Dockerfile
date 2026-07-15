@@ -1,4 +1,4 @@
-# Dev-oriented image running the Vite dev server; see ARCHITECTURE.md §5d for
+# Dev-oriented image running the Vite dev server; see ARCHITECTURE.md §4c for
 # the production-hardening steps deliberately deferred.
 FROM node:22-alpine
 

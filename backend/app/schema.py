@@ -1,7 +1,7 @@
 """Explicit schema via SQLAlchemy Core — no ORM relationship mapping.
 
 Every table and constraint is spelled out here so the data model is
-inspectable in one place (see ARCHITECTURE.md §5a).
+inspectable in one place (see ARCHITECTURE.md §1).
 """
 
 import sqlalchemy as sa

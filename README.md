@@ -32,7 +32,7 @@ The API is available at http://localhost:8000 (OpenAPI docs at `/docs`).
 - **Board view** — three status columns; tasks move by drag-and-drop or the
   arrow buttons on each card (also keyboard/screen-reader friendly).
 - **Real-time propagation** — WebSocket per board; changes broadcast after DB
-  commit and other clients refetch. See `ARCHITECTURE.md` §2 for the full reasoning.
+  commit and other clients refetch. See `ARCHITECTURE.md` for the full reasoning.
 - **Validation & error handling** — Pydantic validation server-side with a
   consistent error shape (`{"detail": {"code", "message"}}`); forms validate
   client-side and surface API errors inline.
@@ -57,19 +57,15 @@ The API is available at http://localhost:8000 (OpenAPI docs at `/docs`).
 
 - Dark mode, activity log, pagination: **not built** (time budget went to must-haves).
 - Docker deployment exists but is dev-oriented, not a production multi-stage build
-  (see `ARCHITECTURE.md` §5d).
+  (see `ARCHITECTURE.md`).
 
 ## Assumptions made
 
-- **Single trusted team**: every user sees all projects and users (matches the
-  brief's "won't do" list). The assignee picker lists all registered users.
+- **Single trusted team**: every user sees all projects and users. The assignee picker lists all registered users.
 - **Mandatory task fields**: title, description, assignee, and due date are all
   required when creating or editing a task (enforced server-side and in the
   form). Every task should be actionable, owned, and scheduled from the start.
-- **Business rule**: if a task ever ends up unassigned (the DB nulls the
-  assignee if that user's account is deleted), moving it to *In Progress*
-  auto-assigns the person who moved it — work in progress should have an
-  owner. Explicit assignee changes always win over this default.
+- **Business rule**:
 - Any transition between the three statuses is allowed (including reopening
   a Done task).
 - Task ordering within a column is by creation time.
@@ -77,7 +73,7 @@ The API is available at http://localhost:8000 (OpenAPI docs at `/docs`).
 ## Notable third-party libraries (and why)
 
 - **TanStack Query** (frontend) — server-state caching and invalidation; the
-  core of the real-time refetch pattern. Full reasoning in `ARCHITECTURE.md` §3.
+  core of the real-time refetch pattern. Full reasoning in `ARCHITECTURE.md`.
 - **@hello-pangea/dnd** (frontend) — board drag-and-drop; the maintained fork
   of react-beautiful-dnd, with accessible keyboard dragging built in.
 - **argon2-cffi** (backend) — Argon2id password hashing, per the brief's
@@ -87,7 +83,7 @@ The API is available at http://localhost:8000 (OpenAPI docs at `/docs`).
 - **slowapi** (backend) — per-IP rate limiting on the auth endpoints; in-memory,
   which is enough for a single-process deployment.
 - **SQLAlchemy Core + asyncpg** (backend) — explicit SQL without ORM
-  relationship mapping (see `ARCHITECTURE.md` §5a).
+  relationship mapping; schema is documented in `ARCHITECTURE.md`.
 
 ## Running without Docker
 
@@ -127,7 +123,7 @@ npm run lint
 npm test
 ```
 
-**What is deliberately not tested** (time budget — see `ARCHITECTURE.md` §5c):
+**What is deliberately not tested** (time budget — see `ARCHITECTURE.md`):
 auth edge cases (expired/malformed tokens), WebSocket reconnect logic, and
 concurrent-edit conflicts. All named risks, not oversights.
 
@@ -151,8 +147,8 @@ falls back to dev-only defaults so a clean clone runs without any setup.
 
 ## Further reading
 
-- `ARCHITECTURE.md` — system overview, the real-time decision and its
-  alternatives, state-management reasoning, scaling at 10x/100x, and the
-  tradeoffs made under the time constraint.
+- `ARCHITECTURE.md` — system overview, the real-time decision (including 10x/100x
+  scaling), state-management reasoning, and the tradeoffs made under the time
+  constraint.
 - `AI_USAGE.md` — which AI tools were used, for what, and what was verified
   or changed by hand.
